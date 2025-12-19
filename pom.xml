@@ -6,7 +6,7 @@
 
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-parent</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>PostgreSQL Bulk Import Library - Parent</name>
@@ -38,7 +38,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/elgina88/pg-bulk-import.git</connection>
-        <developerConnection>scm:git:ssh://github.com:elgina88/pg-bulk-import.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:elgina88/pg-bulk-import.git</developerConnection>
         <url>https://github.com/elgina88/pg-bulk-import</url>
         <tag>HEAD</tag>
     </scm>
@@ -73,6 +73,7 @@
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
+        <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -241,6 +242,25 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>${maven-release-plugin.version}</version>
+                    <configuration>
+                        <!-- Use release profile for GPG signing and Central publishing -->
+                        <releaseProfiles>release</releaseProfiles>
+                        <!-- Tag format: v1.0.0 -->
+                        <tagNameFormat>v@{project.version}</tagNameFormat>
+                        <!-- Don't push changes automatically (safer) -->
+                        <pushChanges>false</pushChanges>
+                        <!-- Generate release POMs -->
+                        <generateReleasePoms>false</generateReleasePoms>
+                        <!-- Skip tests during release:perform (already ran in prepare) -->
+                        <arguments>-DskipTests</arguments>
+                        <!-- Auto-version submodules -->
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

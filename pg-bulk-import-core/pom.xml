@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.egn88</groupId>
         <artifactId>pg-bulk-import-parent</artifactId>
-        <version>2.0.1</version>
+        <version>2.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>pg-bulk-import-core</artifactId>
