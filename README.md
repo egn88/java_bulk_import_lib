@@ -43,6 +43,7 @@ Choose the right module for your project:
 ```
 
 **Quick Reference:**
+
 | Your Project | Module to Use |
 |--------------|---------------|
 | Spring Boot 3.x with JPA | `pg-bulk-import-spring-boot` |
