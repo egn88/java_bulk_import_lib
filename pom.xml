@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- TODO: Update groupId to match your namespace (e.g., io.github.yourusername) -->
-    <groupId>io.github.elgina88</groupId>
+    <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
