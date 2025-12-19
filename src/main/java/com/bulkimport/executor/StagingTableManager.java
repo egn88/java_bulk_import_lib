@@ -2,18 +2,18 @@ package com.bulkimport.executor;
 
 import com.bulkimport.config.BulkImportConfig;
 import com.bulkimport.exception.ExecutionException;
-import com.bulkimport.mapping.ColumnMapping;
 import com.bulkimport.mapping.TableMapping;
+import com.bulkimport.util.SqlIdentifier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Manages temporary staging tables for bulk UPDATE and UPSERT operations.
@@ -51,10 +51,40 @@ public class StagingTableManager<T> {
 
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(createTableSql);
+
+            // Make all columns nullable in staging table to allow partial data
+            // This is needed when ID columns are auto-generated and not in the mapping
+            makeColumnsNullable(stmt);
+
             log.info("Created staging table: {}", stagingTableName);
             return stagingTableName;
         } catch (SQLException e) {
             throw ExecutionException.stagingTableCreationFailed(stagingTableName, e);
+        }
+    }
+
+    private void makeColumnsNullable(Statement stmt) throws SQLException {
+        // Get all columns that have NOT NULL constraint and drop it
+        // Use parameterized query for the table name lookup
+        String query = """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = ?
+            AND is_nullable = 'NO'
+            """;
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, stagingTableName);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String columnName = rs.getString("column_name");
+                    // Validate and quote identifiers to prevent SQL injection
+                    String alterSql = "ALTER TABLE " + SqlIdentifier.quote(stagingTableName) +
+                                     " ALTER COLUMN " + SqlIdentifier.quote(columnName) + " DROP NOT NULL";
+                    log.debug("Dropping NOT NULL constraint: {}", alterSql);
+                    stmt.execute(alterSql);
+                }
+            }
         }
     }
 
@@ -71,7 +101,7 @@ public class StagingTableManager<T> {
             return;
         }
 
-        String dropSql = "DROP TABLE IF EXISTS " + stagingTableName;
+        String dropSql = "DROP TABLE IF EXISTS " + SqlIdentifier.quote(stagingTableName);
         log.debug("Dropping staging table: {}", dropSql);
 
         try (Statement stmt = connection.createStatement()) {
@@ -108,124 +138,16 @@ public class StagingTableManager<T> {
             sql.append("CREATE TEMP TABLE ");
         }
 
-        sql.append(stagingTableName).append(" (");
+        // Quote staging table name (already validated in generateStagingTableName)
+        sql.append(SqlIdentifier.quote(stagingTableName));
 
-        // Add column definitions
-        List<String> columnDefs = mapping.getColumns().stream()
-            .map(this::buildColumnDefinition)
-            .collect(Collectors.toList());
-
-        sql.append(String.join(", ", columnDefs));
-        sql.append(")");
+        // Use LIKE to copy column definitions from target table
+        // This ensures correct types regardless of how mapping was defined
+        // Quote the source table name for safety
+        String sourceTable = SqlIdentifier.quoteQualified(
+                mapping.getSchemaName(), mapping.getTableName());
+        sql.append(" (LIKE ").append(sourceTable).append(")");
 
         return sql.toString();
-    }
-
-    private String buildColumnDefinition(ColumnMapping<T, ?> column) {
-        StringBuilder def = new StringBuilder();
-        def.append(column.getColumnName());
-        def.append(" ");
-        def.append(mapJavaTypeToSqlType(column.getValueType()));
-
-        return def.toString();
-    }
-
-    /**
-     * Maps Java types to PostgreSQL types.
-     */
-    private String mapJavaTypeToSqlType(Class<?> javaType) {
-        if (javaType == null || javaType == Object.class) {
-            return "TEXT";
-        }
-
-        // String types
-        if (javaType == String.class) {
-            return "TEXT";
-        }
-
-        // Numeric types
-        if (javaType == Integer.class || javaType == int.class) {
-            return "INTEGER";
-        }
-        if (javaType == Long.class || javaType == long.class) {
-            return "BIGINT";
-        }
-        if (javaType == Short.class || javaType == short.class) {
-            return "SMALLINT";
-        }
-        if (javaType == java.math.BigDecimal.class) {
-            return "NUMERIC";
-        }
-        if (javaType == java.math.BigInteger.class) {
-            return "NUMERIC";
-        }
-        if (javaType == Double.class || javaType == double.class) {
-            return "DOUBLE PRECISION";
-        }
-        if (javaType == Float.class || javaType == float.class) {
-            return "REAL";
-        }
-
-        // Boolean
-        if (javaType == Boolean.class || javaType == boolean.class) {
-            return "BOOLEAN";
-        }
-
-        // Date/Time
-        if (javaType == java.time.LocalDate.class) {
-            return "DATE";
-        }
-        if (javaType == java.time.LocalDateTime.class) {
-            return "TIMESTAMP";
-        }
-        if (javaType == java.time.LocalTime.class) {
-            return "TIME";
-        }
-        if (javaType == java.time.Instant.class ||
-            javaType == java.time.ZonedDateTime.class ||
-            javaType == java.time.OffsetDateTime.class) {
-            return "TIMESTAMP WITH TIME ZONE";
-        }
-        if (javaType == java.sql.Date.class) {
-            return "DATE";
-        }
-        if (javaType == java.sql.Timestamp.class) {
-            return "TIMESTAMP";
-        }
-        if (javaType == java.util.Date.class) {
-            return "TIMESTAMP WITH TIME ZONE";
-        }
-
-        // UUID
-        if (javaType == java.util.UUID.class) {
-            return "UUID";
-        }
-
-        // Binary
-        if (javaType == byte[].class) {
-            return "BYTEA";
-        }
-
-        // Arrays and Lists
-        if (javaType.isArray()) {
-            Class<?> componentType = javaType.getComponentType();
-            return mapJavaTypeToSqlType(componentType) + "[]";
-        }
-        if (java.util.List.class.isAssignableFrom(javaType)) {
-            return "TEXT[]";
-        }
-
-        // JSON (check for Jackson JsonNode)
-        if (javaType.getName().equals("com.fasterxml.jackson.databind.JsonNode")) {
-            return "JSONB";
-        }
-
-        // Enum
-        if (javaType.isEnum()) {
-            return "TEXT";
-        }
-
-        // Default to TEXT
-        return "TEXT";
     }
 }

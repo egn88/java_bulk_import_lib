@@ -4,6 +4,7 @@ import com.bulkimport.config.BulkImportConfig;
 import com.bulkimport.config.ConflictStrategy;
 import com.bulkimport.exception.ExecutionException;
 import com.bulkimport.mapping.TableMapping;
+import com.bulkimport.util.SqlIdentifier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,26 +76,26 @@ public class UpdateExecutor<T> {
     }
 
     private String buildUpdateSql(String stagingTableName) {
-        String targetTable = getTargetTableName();
+        String targetTable = getQuotedTargetTableName();
         List<String> matchColumns = getMatchColumns();
         List<String> updateColumns = getUpdateColumns();
 
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(targetTable).append(" AS t SET ");
 
-        // SET clause
+        // SET clause - quote column names
         String setClause = updateColumns.stream()
-            .map(col -> col + " = s." + col)
+            .map(col -> SqlIdentifier.quote(col) + " = s." + SqlIdentifier.quote(col))
             .collect(Collectors.joining(", "));
         sql.append(setClause);
 
-        // FROM clause
-        sql.append(" FROM ").append(stagingTableName).append(" AS s");
+        // FROM clause - quote staging table name
+        sql.append(" FROM ").append(SqlIdentifier.quote(stagingTableName)).append(" AS s");
 
-        // WHERE clause for matching
+        // WHERE clause for matching - quote column names
         sql.append(" WHERE ");
         String whereClause = matchColumns.stream()
-            .map(col -> "t." + col + " = s." + col)
+            .map(col -> "t." + SqlIdentifier.quote(col) + " = s." + SqlIdentifier.quote(col))
             .collect(Collectors.joining(" AND "));
         sql.append(whereClause);
 
@@ -102,30 +103,30 @@ public class UpdateExecutor<T> {
     }
 
     private String buildUpsertSql(String stagingTableName) {
-        String targetTable = getTargetTableName();
+        String targetTable = getQuotedTargetTableName();
         List<String> allColumns = mapping.getColumnNames();
         List<String> conflictColumns = getConflictColumns();
 
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ").append(targetTable);
-        sql.append(" (").append(String.join(", ", allColumns)).append(")");
+        sql.append(" (").append(SqlIdentifier.quoteAndJoin(allColumns)).append(")");
 
-        // SELECT from staging
-        sql.append(" SELECT ").append(String.join(", ", allColumns));
-        sql.append(" FROM ").append(stagingTableName);
+        // SELECT from staging - quote column and table names
+        sql.append(" SELECT ").append(SqlIdentifier.quoteAndJoin(allColumns));
+        sql.append(" FROM ").append(SqlIdentifier.quote(stagingTableName));
 
         // ON CONFLICT clause
         ConflictStrategy strategy = config.getConflictStrategy();
         if (strategy == ConflictStrategy.DO_NOTHING) {
-            sql.append(" ON CONFLICT (").append(String.join(", ", conflictColumns)).append(")");
+            sql.append(" ON CONFLICT (").append(SqlIdentifier.quoteAndJoin(conflictColumns)).append(")");
             sql.append(" DO NOTHING");
         } else if (strategy == ConflictStrategy.UPDATE_ALL || strategy == ConflictStrategy.UPDATE_SPECIFIED) {
-            sql.append(" ON CONFLICT (").append(String.join(", ", conflictColumns)).append(")");
+            sql.append(" ON CONFLICT (").append(SqlIdentifier.quoteAndJoin(conflictColumns)).append(")");
             sql.append(" DO UPDATE SET ");
 
             List<String> updateColumns = getUpdateColumnsForUpsert();
             String updateClause = updateColumns.stream()
-                .map(col -> col + " = EXCLUDED." + col)
+                .map(col -> SqlIdentifier.quote(col) + " = EXCLUDED." + SqlIdentifier.quote(col))
                 .collect(Collectors.joining(", "));
             sql.append(updateClause);
         }
@@ -134,12 +135,12 @@ public class UpdateExecutor<T> {
         return sql.toString();
     }
 
-    private String getTargetTableName() {
+    private String getQuotedTargetTableName() {
         String schema = config.getSchemaName();
         if (schema != null && !schema.isEmpty()) {
-            return schema + "." + mapping.getTableName();
+            return SqlIdentifier.quoteQualified(schema, mapping.getTableName());
         }
-        return mapping.getFullTableName();
+        return SqlIdentifier.quoteQualified(mapping.getSchemaName(), mapping.getTableName());
     }
 
     private List<String> getMatchColumns() {

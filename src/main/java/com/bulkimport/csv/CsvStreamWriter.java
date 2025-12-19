@@ -9,6 +9,9 @@ import com.bulkimport.mapping.TableMapping;
 import de.siegmar.fastcsv.writer.CsvWriter;
 import de.siegmar.fastcsv.writer.LineDelimiter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -25,6 +28,13 @@ import java.util.stream.Stream;
  * @param <T> the entity type
  */
 public class CsvStreamWriter<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(CsvStreamWriter.class);
+
+    /**
+     * Progress logging interval (log every N rows).
+     */
+    private static final int PROGRESS_LOG_INTERVAL = 100_000;
 
     private final TableMapping<T> mapping;
     private final TypeConverterRegistry converterRegistry;
@@ -101,6 +111,7 @@ public class CsvStreamWriter<T> {
                 .build(writer)) {
 
             int rowCount = 0;
+            long startTime = System.currentTimeMillis();
 
             while (entities.hasNext()) {
                 T entity = entities.next();
@@ -114,7 +125,33 @@ public class CsvStreamWriter<T> {
 
                 csvWriter.writeRecord(values);
                 rowCount++;
+
+                // Log progress every PROGRESS_LOG_INTERVAL rows
+                if (rowCount % PROGRESS_LOG_INTERVAL == 0) {
+                    long elapsedMs = System.currentTimeMillis() - startTime;
+                    double rowsPerSec = rowCount * 1000.0 / elapsedMs;
+                    if (expectedCount > 0) {
+                        double percent = (rowCount * 100.0) / expectedCount;
+                        log.info("COPY progress: {} / {} rows ({} %) - {} rows/sec",
+                                String.format("%,d", rowCount),
+                                String.format("%,d", expectedCount),
+                                String.format("%.1f", percent),
+                                String.format("%.0f", rowsPerSec));
+                    } else {
+                        log.info("COPY progress: {} rows processed - {} rows/sec",
+                                String.format("%,d", rowCount),
+                                String.format("%.0f", rowsPerSec));
+                    }
+                }
             }
+
+            // Log final count
+            long totalTimeMs = System.currentTimeMillis() - startTime;
+            double finalRowsPerSec = rowCount * 1000.0 / Math.max(totalTimeMs, 1);
+            log.info("COPY completed: {} rows in {} ms ({} rows/sec)",
+                    String.format("%,d", rowCount),
+                    String.format("%,d", totalTimeMs),
+                    String.format("%.0f", finalRowsPerSec));
 
             return rowCount;
         }

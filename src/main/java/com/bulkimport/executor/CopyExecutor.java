@@ -5,6 +5,7 @@ import com.bulkimport.converter.TypeConverterRegistry;
 import com.bulkimport.csv.CsvStreamWriter;
 import com.bulkimport.exception.ExecutionException;
 import com.bulkimport.mapping.TableMapping;
+import com.bulkimport.util.SqlIdentifier;
 
 import org.postgresql.PGConnection;
 import org.postgresql.copy.CopyManager;
@@ -184,12 +185,11 @@ public class CopyExecutor<T> {
 
     private String buildCopyCommand(String tableName) {
         List<String> columnNames = mapping.getColumnNames();
-        String columns = String.join(", ", columnNames);
 
-        // Build COPY command with CSV format
+        // Build COPY command with CSV format - quote all identifiers
         StringBuilder sb = new StringBuilder();
-        sb.append("COPY ").append(tableName);
-        sb.append(" (").append(columns).append(")");
+        sb.append("COPY ").append(getQuotedTableName(tableName));
+        sb.append(" (").append(SqlIdentifier.quoteAndJoin(columnNames)).append(")");
         sb.append(" FROM STDIN WITH (FORMAT csv");
 
         // Add NULL handling if not using empty string
@@ -204,11 +204,21 @@ public class CopyExecutor<T> {
         return sb.toString();
     }
 
-    private String getFullTableName() {
+    private String getQuotedTableName(String tableName) {
+        // If tableName is a staging table (no schema), just quote it
+        if (tableName.startsWith(config.getStagingTablePrefix())) {
+            return SqlIdentifier.quote(tableName);
+        }
+        // For target table, use schema-qualified quoting
         String schema = config.getSchemaName();
         if (schema != null && !schema.isEmpty()) {
-            return schema + "." + mapping.getTableName();
+            return SqlIdentifier.quoteQualified(schema, mapping.getTableName());
         }
-        return mapping.getFullTableName();
+        return SqlIdentifier.quoteQualified(mapping.getSchemaName(), mapping.getTableName());
+    }
+
+    private String getFullTableName() {
+        // Return unquoted table name for internal use
+        return mapping.getTableName();
     }
 }
