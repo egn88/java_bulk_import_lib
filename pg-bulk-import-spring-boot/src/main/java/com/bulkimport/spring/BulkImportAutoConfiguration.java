@@ -23,9 +23,9 @@ import javax.sql.DataSource;
  *
  * <p>Configuration can be customized via properties:
  * <pre>
- * bulkimport.batch-size=5000
  * bulkimport.conflict-strategy=UPDATE_ALL
- * bulkimport.use-unlogged-tables=true
+ * bulkimport.staging-table-prefix=bulk_staging_
+ * bulkimport.null-handling=EMPTY_STRING
  * </pre>
  */
 @AutoConfiguration
@@ -47,9 +47,7 @@ public class BulkImportAutoConfiguration {
     @ConditionalOnMissingBean
     public BulkImportConfig bulkImportConfig() {
         BulkImportConfig.Builder builder = BulkImportConfig.builder()
-            .batchSize(properties.getBatchSize())
             .conflictStrategy(properties.getConflictStrategy())
-            .useUnloggedTables(properties.isUseUnloggedTables())
             .stagingTablePrefix(properties.getStagingTablePrefix())
             .autoCleanupStaging(properties.isAutoCleanupStaging())
             .nullHandling(properties.getNullHandling());

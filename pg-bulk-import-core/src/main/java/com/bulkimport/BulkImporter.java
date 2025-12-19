@@ -47,7 +47,6 @@ import java.util.stream.Stream;
  * <h3>Upsert with Configuration</h3>
  * <pre>{@code
  * BulkImportConfig config = BulkImportConfig.builder()
- *     .batchSize(5000)
  *     .conflictStrategy(ConflictStrategy.UPDATE_ALL)
  *     .conflictColumns("email")
  *     .build();

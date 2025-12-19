@@ -129,12 +129,8 @@ public class StagingTableManager<T> {
     private String buildCreateTableSql() {
         StringBuilder sql = new StringBuilder();
 
-        // Use UNLOGGED table for better performance (no WAL logging)
-        if (config.isUseUnloggedTables()) {
-            sql.append("CREATE UNLOGGED TABLE ");
-        } else {
-            sql.append("CREATE TEMP TABLE ");
-        }
+        // Use TEMP table - session-scoped, no WAL, auto-cleanup on session end
+        sql.append("CREATE TEMP TABLE ");
 
         // Quote staging table name (already validated in generateStagingTableName)
         sql.append(SqlIdentifier.quote(stagingTableName));

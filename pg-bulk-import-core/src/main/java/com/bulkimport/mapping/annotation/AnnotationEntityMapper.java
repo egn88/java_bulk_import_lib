@@ -4,6 +4,7 @@ import com.bulkimport.exception.MappingException;
 import com.bulkimport.mapping.ColumnMapping;
 import com.bulkimport.mapping.EntityMapper;
 import com.bulkimport.mapping.TableMapping;
+import com.bulkimport.util.SqlIdentifier;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -139,7 +140,7 @@ public class AnnotationEntityMapper<T> implements EntityMapper<T> {
         }
 
         // Default to field name converted to snake_case
-        return camelToSnake(field.getName());
+        return SqlIdentifier.camelToSnake(field.getName());
     }
 
     private boolean resolveNullable(Field field, boolean isId) {
@@ -154,29 +155,5 @@ public class AnnotationEntityMapper<T> implements EntityMapper<T> {
 
         // Primitives are not nullable
         return !field.getType().isPrimitive();
-    }
-
-    /**
-     * Converts camelCase to snake_case.
-     */
-    private String camelToSnake(String camelCase) {
-        if (camelCase == null || camelCase.isEmpty()) {
-            return camelCase;
-        }
-
-        StringBuilder result = new StringBuilder();
-        result.append(Character.toLowerCase(camelCase.charAt(0)));
-
-        for (int i = 1; i < camelCase.length(); i++) {
-            char c = camelCase.charAt(i);
-            if (Character.isUpperCase(c)) {
-                result.append('_');
-                result.append(Character.toLowerCase(c));
-            } else {
-                result.append(c);
-            }
-        }
-
-        return result.toString();
     }
 }

@@ -13,24 +13,20 @@ import java.util.Objects;
  */
 public class BulkImportConfig {
 
-    private final int batchSize;
     private final ConflictStrategy conflictStrategy;
     private final List<String> conflictColumns;
     private final List<String> updateColumns;
     private final List<String> matchColumns;
-    private final boolean useUnloggedTables;
     private final String stagingTablePrefix;
     private final boolean autoCleanupStaging;
     private final NullHandling nullHandling;
     private final String schemaName;
 
     private BulkImportConfig(Builder builder) {
-        this.batchSize = builder.batchSize;
         this.conflictStrategy = builder.conflictStrategy;
         this.conflictColumns = Collections.unmodifiableList(new ArrayList<>(builder.conflictColumns));
         this.updateColumns = Collections.unmodifiableList(new ArrayList<>(builder.updateColumns));
         this.matchColumns = Collections.unmodifiableList(new ArrayList<>(builder.matchColumns));
-        this.useUnloggedTables = builder.useUnloggedTables;
         this.stagingTablePrefix = builder.stagingTablePrefix;
         this.autoCleanupStaging = builder.autoCleanupStaging;
         this.nullHandling = builder.nullHandling;
@@ -51,10 +47,6 @@ public class BulkImportConfig {
         return builder().build();
     }
 
-    public int getBatchSize() {
-        return batchSize;
-    }
-
     public ConflictStrategy getConflictStrategy() {
         return conflictStrategy;
     }
@@ -69,10 +61,6 @@ public class BulkImportConfig {
 
     public List<String> getMatchColumns() {
         return matchColumns;
-    }
-
-    public boolean isUseUnloggedTables() {
-        return useUnloggedTables;
     }
 
     public String getStagingTablePrefix() {
@@ -116,32 +104,16 @@ public class BulkImportConfig {
      * Builder for BulkImportConfig.
      */
     public static class Builder {
-        private int batchSize = 10_000;
         private ConflictStrategy conflictStrategy = ConflictStrategy.FAIL;
         private List<String> conflictColumns = new ArrayList<>();
         private List<String> updateColumns = new ArrayList<>();
         private List<String> matchColumns = new ArrayList<>();
-        private boolean useUnloggedTables = true;
         private String stagingTablePrefix = "bulk_staging_";
         private boolean autoCleanupStaging = true;
         private NullHandling nullHandling = NullHandling.EMPTY_STRING;
         private String schemaName = null;
 
         private Builder() {
-        }
-
-        /**
-         * Sets the batch size for streaming operations.
-         * Default: 10,000
-         *
-         * @param batchSize must be greater than 0
-         */
-        public Builder batchSize(int batchSize) {
-            if (batchSize <= 0) {
-                throw ConfigurationException.invalidBatchSize(batchSize);
-            }
-            this.batchSize = batchSize;
-            return this;
         }
 
         /**
@@ -201,16 +173,6 @@ public class BulkImportConfig {
          */
         public Builder matchColumns(List<String> columns) {
             this.matchColumns = new ArrayList<>(columns);
-            return this;
-        }
-
-        /**
-         * Sets whether to use UNLOGGED tables for staging.
-         * UNLOGGED tables are faster but not crash-safe.
-         * Default: true
-         */
-        public Builder useUnloggedTables(boolean useUnlogged) {
-            this.useUnloggedTables = useUnlogged;
             return this;
         }
 

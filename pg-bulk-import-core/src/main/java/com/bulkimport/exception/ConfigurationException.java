@@ -14,15 +14,6 @@ public class ConfigurationException extends BulkImportException {
     }
 
     /**
-     * Creates an exception for invalid batch size.
-     */
-    public static ConfigurationException invalidBatchSize(int batchSize) {
-        return new ConfigurationException(
-            String.format("Invalid batch size: %d. Batch size must be greater than 0.", batchSize)
-        );
-    }
-
-    /**
      * Creates an exception for missing required configuration.
      */
     public static ConfigurationException missingRequired(String configName) {

@@ -5,6 +5,7 @@ import com.bulkimport.mapping.ColumnMapping;
 import com.bulkimport.mapping.EntityMapper;
 import com.bulkimport.mapping.EntityMapperResolver;
 import com.bulkimport.mapping.TableMapping;
+import com.bulkimport.util.SqlIdentifier;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -92,7 +93,7 @@ public class JpaEntityMapper<T> implements EntityMapper<T> {
         }
 
         // Fall back to simple class name in lowercase
-        return camelToSnake(entityClass.getSimpleName());
+        return SqlIdentifier.camelToSnake(entityClass.getSimpleName());
     }
 
     private String resolveSchemaName(Class<?> entityClass) {
@@ -167,7 +168,7 @@ public class JpaEntityMapper<T> implements EntityMapper<T> {
         if (column != null && !column.name().isEmpty()) {
             return column.name();
         }
-        return camelToSnake(field.getName());
+        return SqlIdentifier.camelToSnake(field.getName());
     }
 
     private boolean resolveNullable(Field field, boolean isId) {
@@ -182,29 +183,5 @@ public class JpaEntityMapper<T> implements EntityMapper<T> {
 
         // Primitives are not nullable
         return !field.getType().isPrimitive();
-    }
-
-    /**
-     * Converts camelCase to snake_case.
-     */
-    private String camelToSnake(String camelCase) {
-        if (camelCase == null || camelCase.isEmpty()) {
-            return camelCase;
-        }
-
-        StringBuilder result = new StringBuilder();
-        result.append(Character.toLowerCase(camelCase.charAt(0)));
-
-        for (int i = 1; i < camelCase.length(); i++) {
-            char c = camelCase.charAt(i);
-            if (Character.isUpperCase(c)) {
-                result.append('_');
-                result.append(Character.toLowerCase(c));
-            } else {
-                result.append(c);
-            }
-        }
-
-        return result.toString();
     }
 }

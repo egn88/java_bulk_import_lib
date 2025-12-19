@@ -107,7 +107,7 @@ Use the core module with custom `@BulkTable` annotations or fluent builder API:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-core</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 
@@ -139,7 +139,7 @@ Use the javax.persistence module to work with existing JPA entities:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-jpa-javax</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 
@@ -170,7 +170,7 @@ Use the jakarta.persistence module for modern JPA:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-jpa-jakarta</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 
@@ -201,7 +201,7 @@ Use the Spring Boot starter for auto-configuration:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-spring-boot</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 
@@ -224,16 +224,16 @@ public class UserService {
 
 ```groovy
 // Java 8 (core only)
-implementation 'io.github.egn88:pg-bulk-import-core:2.0.0'
+implementation 'io.github.egn88:pg-bulk-import-core:2.0.1'
 
 // Java 8 with JPA (javax)
-implementation 'io.github.egn88:pg-bulk-import-jpa-javax:2.0.0'
+implementation 'io.github.egn88:pg-bulk-import-jpa-javax:2.0.1'
 
 // Java 17+ with JPA (jakarta)
-implementation 'io.github.egn88:pg-bulk-import-jpa-jakarta:2.0.0'
+implementation 'io.github.egn88:pg-bulk-import-jpa-jakarta:2.0.1'
 
 // Spring Boot 3.x
-implementation 'io.github.egn88:pg-bulk-import-spring-boot:2.0.0'
+implementation 'io.github.egn88:pg-bulk-import-spring-boot:2.0.1'
 ```
 
 ## Building the Library
@@ -418,9 +418,6 @@ int affected = importer.upsert(mapping, users);
 
 ```java
 BulkImportConfig config = BulkImportConfig.builder()
-    // Batch size for streaming (default: 10,000)
-    .batchSize(5000)
-
     // Conflict strategy for upserts
     .conflictStrategy(ConflictStrategy.UPDATE_ALL)
 
@@ -433,9 +430,6 @@ BulkImportConfig config = BulkImportConfig.builder()
     // Columns for matching rows in UPDATE operations
     // (defaults to @Id columns if not specified)
     .matchColumns("external_id")
-
-    // Use UNLOGGED tables for staging (faster, default: true)
-    .useUnloggedTables(true)
 
     // Staging table name prefix (default: "bulk_staging_")
     .stagingTablePrefix("tmp_")
@@ -562,9 +556,7 @@ Configure via `application.properties` or `application.yml`:
 ```properties
 # application.properties
 bulkimport.enabled=true
-bulkimport.batch-size=5000
 bulkimport.conflict-strategy=UPDATE_ALL
-bulkimport.use-unlogged-tables=true
 bulkimport.staging-table-prefix=bulk_staging_
 bulkimport.auto-cleanup-staging=true
 bulkimport.null-handling=EMPTY_STRING
@@ -575,7 +567,6 @@ bulkimport.schema-name=public
 # application.yml
 bulkimport:
   enabled: true
-  batch-size: 5000
   conflict-strategy: UPDATE_ALL
   conflict-columns:
     - id
@@ -596,7 +587,6 @@ public class BulkImportConfiguration {
     @Bean
     public BulkImportConfig bulkImportConfig() {
         return BulkImportConfig.builder()
-            .batchSize(10000)
             .conflictStrategy(ConflictStrategy.UPDATE_ALL)
             .conflictColumns("id")
             .build();
@@ -637,16 +627,11 @@ try {
    importer.insert(mapping, users);
    ```
 
-2. **Tune Batch Size**: Default is 10,000; adjust based on your data size and memory
-   ```java
-   .batchSize(50000)
-   ```
+2. **Disable Auto-Commit**: For multiple operations, use explicit transactions
 
-3. **Use UNLOGGED Tables**: Enabled by default for staging tables (faster but not crash-safe)
+3. **Index Conflict Columns**: Ensure columns used in `ON CONFLICT` have indexes
 
-4. **Disable Auto-Commit**: For multiple operations, use explicit transactions
-
-5. **Index Conflict Columns**: Ensure columns used in `ON CONFLICT` have indexes
+4. **No Size Limits**: The library streams data directly to PostgreSQL, so there's no practical limit on dataset size - 1 million or 10 million rows work equally well
 
 ## How It Works
 
@@ -657,17 +642,17 @@ try {
 4. Return affected row count
 
 ### UPDATE Flow
-1. Create UNLOGGED temporary staging table
+1. Create temporary staging table (session-scoped, no WAL overhead)
 2. COPY data to staging table
 3. Execute `UPDATE target SET ... FROM staging WHERE ...`
-4. Drop staging table
+4. Drop staging table (or auto-cleanup on session end)
 5. Return affected row count
 
 ### UPSERT Flow
-1. Create UNLOGGED temporary staging table
+1. Create temporary staging table (session-scoped, no WAL overhead)
 2. COPY data to staging table
 3. Execute `INSERT INTO target SELECT ... FROM staging ON CONFLICT (...) DO UPDATE SET ...`
-4. Drop staging table
+4. Drop staging table (or auto-cleanup on session end)
 5. Return affected row count
 
 ## Migration Guide

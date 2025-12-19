@@ -12,18 +12,13 @@ import java.util.List;
  * Can be configured in application.properties or application.yml:
  *
  * <pre>
- * bulkimport.batch-size=5000
  * bulkimport.conflict-strategy=UPDATE_ALL
- * bulkimport.use-unlogged-tables=true
+ * bulkimport.staging-table-prefix=bulk_staging_
+ * bulkimport.null-handling=EMPTY_STRING
  * </pre>
  */
 @ConfigurationProperties(prefix = "bulkimport")
 public class BulkImportProperties {
-
-    /**
-     * Batch size for streaming operations.
-     */
-    private int batchSize = 10_000;
 
     /**
      * Strategy for handling conflicts during upsert operations.
@@ -44,11 +39,6 @@ public class BulkImportProperties {
      * Columns to use for matching rows during UPDATE operations.
      */
     private List<String> matchColumns;
-
-    /**
-     * Whether to use UNLOGGED tables for staging.
-     */
-    private boolean useUnloggedTables = true;
 
     /**
      * Prefix for staging table names.
@@ -74,14 +64,6 @@ public class BulkImportProperties {
      * Whether to enable the auto-configuration.
      */
     private boolean enabled = true;
-
-    public int getBatchSize() {
-        return batchSize;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
 
     public ConflictStrategy getConflictStrategy() {
         return conflictStrategy;
@@ -113,14 +95,6 @@ public class BulkImportProperties {
 
     public void setMatchColumns(List<String> matchColumns) {
         this.matchColumns = matchColumns;
-    }
-
-    public boolean isUseUnloggedTables() {
-        return useUnloggedTables;
-    }
-
-    public void setUseUnloggedTables(boolean useUnloggedTables) {
-        this.useUnloggedTables = useUnloggedTables;
     }
 
     public String getStagingTablePrefix() {
@@ -162,4 +136,7 @@ public class BulkImportProperties {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
+
+    // Note: batchSize and useUnloggedTables have been removed.
+    // Staging tables now always use TEMP tables with COPY FREEZE for optimal performance.
 }

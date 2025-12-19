@@ -65,11 +65,7 @@ public class CopyExecutor<T> {
      * @return the number of rows inserted
      */
     public long copyIn(List<T> entities) {
-        if (entities.isEmpty()) {
-            return 0;
-        }
-
-        return executeCopy(entities, null);
+        return entities.isEmpty() ? 0 : copyIn(entities.stream());
     }
 
     /**
@@ -79,7 +75,7 @@ public class CopyExecutor<T> {
      * @return the number of rows inserted
      */
     public long copyIn(Stream<T> entities) {
-        return executeCopy(null, entities);
+        return executeCopy(getFullTableName(), entities);
     }
 
     /**
@@ -90,11 +86,7 @@ public class CopyExecutor<T> {
      * @return the number of rows inserted
      */
     public long copyInTo(String tableName, List<T> entities) {
-        if (entities.isEmpty()) {
-            return 0;
-        }
-
-        return executeCopy(tableName, entities, null);
+        return entities.isEmpty() ? 0 : copyInTo(tableName, entities.stream());
     }
 
     /**
@@ -105,15 +97,10 @@ public class CopyExecutor<T> {
      * @return the number of rows inserted
      */
     public long copyInTo(String tableName, Stream<T> entities) {
-        return executeCopy(tableName, null, entities);
+        return executeCopy(tableName, entities);
     }
 
-    private long executeCopy(List<T> list, Stream<T> stream) {
-        String tableName = getFullTableName();
-        return executeCopy(tableName, list, stream);
-    }
-
-    private long executeCopy(String tableName, List<T> list, Stream<T> stream) {
+    private long executeCopy(String tableName, Stream<T> entities) {
         String copyCommand = buildCopyCommand(tableName);
         log.debug("Executing COPY command: {}", copyCommand);
 
@@ -129,16 +116,11 @@ public class CopyExecutor<T> {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 CompletableFuture<Integer> writerFuture = CompletableFuture.supplyAsync(() -> {
                     try {
-                        int count;
-                        if (list != null) {
-                            count = csvWriter.write(list, pipedOut);
-                        } else {
-                            count = csvWriter.write(stream, pipedOut);
-                        }
+                        int count = csvWriter.write(entities, pipedOut);
                         pipedOut.close();
                         return count;
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        throw ExecutionException.csvGenerationFailed(e);
                     }
                 }, executor);
 

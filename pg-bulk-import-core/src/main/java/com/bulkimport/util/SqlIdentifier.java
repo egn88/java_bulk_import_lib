@@ -116,4 +116,31 @@ public final class SqlIdentifier {
         }
         return VALID_IDENTIFIER.matcher(identifier).matches();
     }
+
+    /**
+     * Converts a camelCase string to snake_case.
+     *
+     * @param camelCase the camelCase string to convert
+     * @return the snake_case version of the string
+     */
+    public static String camelToSnake(String camelCase) {
+        if (camelCase == null || camelCase.isEmpty()) {
+            return camelCase;
+        }
+
+        StringBuilder result = new StringBuilder();
+        result.append(Character.toLowerCase(camelCase.charAt(0)));
+
+        for (int i = 1; i < camelCase.length(); i++) {
+            char c = camelCase.charAt(i);
+            if (Character.isUpperCase(c)) {
+                result.append('_');
+                result.append(Character.toLowerCase(c));
+            } else {
+                result.append(c);
+            }
+        }
+
+        return result.toString();
+    }
 }
