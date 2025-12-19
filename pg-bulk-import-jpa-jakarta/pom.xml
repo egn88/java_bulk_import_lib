@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.egn88</groupId>
+        <artifactId>pg-bulk-import-parent</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <artifactId>pg-bulk-import-jpa-jakarta</artifactId>
+    <packaging>jar</packaging>
+
+    <name>PostgreSQL Bulk Import - JPA (jakarta.persistence)</name>
+    <description>JPA support for pg-bulk-import using jakarta.persistence (Java 17+, JPA 3.x)</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <!-- Core module (exclude FastCSV 1.x, we'll use 3.x) -->
+        <dependency>
+            <groupId>io.github.egn88</groupId>
+            <artifactId>pg-bulk-import-core</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>de.siegmar</groupId>
+                    <artifactId>fastcsv</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- FastCSV 3.x for Java 17+ (better performance) -->
+        <dependency>
+            <groupId>de.siegmar</groupId>
+            <artifactId>fastcsv</artifactId>
+            <version>3.4.0</version>
+        </dependency>
+
+        <!-- JPA API (jakarta.persistence) -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
