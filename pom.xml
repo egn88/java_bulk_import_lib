@@ -4,16 +4,49 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.bulkimport</groupId>
-    <artifactId>bulk-import-lib</artifactId>
+    <!-- TODO: Update groupId to match your namespace (e.g., io.github.yourusername) -->
+    <groupId>io.github.elgina88</groupId>
+    <artifactId>pg-bulk-import</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Bulk Import Library</name>
+    <name>PostgreSQL Bulk Import Library</name>
     <description>A Java library for efficient bulk INSERT/UPDATE operations on PostgreSQL using COPY command</description>
+    <!-- TODO: Update URL to your repository -->
+    <url>https://github.com/elgina88/pg-bulk-import</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <!-- TODO: Update developer information -->
+    <developers>
+        <developer>
+            <id>elgina88</id>
+            <name>Eloy Ginestar</name>
+            <url>https://github.com/elgina88</url>
+        </developer>
+    </developers>
+
+    <!-- TODO: Update SCM URLs to your repository -->
+    <scm>
+        <connection>scm:git:git://github.com/elgina88/pg-bulk-import.git</connection>
+        <developerConnection>scm:git:ssh://github.com:elgina88/pg-bulk-import.git</developerConnection>
+        <url>https://github.com/elgina88/pg-bulk-import</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/elgina88/pg-bulk-import/issues</url>
+    </issueManagement>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -189,6 +222,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.11.2</version>
+                <configuration>
+                    <doclint>none</doclint>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -200,4 +236,42 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Release profile for publishing to Maven Central -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- GPG Signing -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Central Publishing Plugin -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.6.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

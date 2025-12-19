@@ -15,7 +15,7 @@ A high-performance Java library for bulk INSERT, UPDATE, and UPSERT operations o
 
 ## Requirements
 
-- Java 21+
+- Java 17+
 - PostgreSQL 12+
 - Maven 3.6+ (for building)
 
