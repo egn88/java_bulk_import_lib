@@ -12,6 +12,7 @@
     <url>https://github.com/egn88/java_bulk_import_lib</url>
 
     <modules>
+        <module>pg-bulk-import-bom</module>
         <module>pg-bulk-import-core</module>
         <module>pg-bulk-import-jpa-javax</module>
         <module>pg-bulk-import-jpa-jakarta</module>

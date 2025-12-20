@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.egn88</groupId>
+    <artifactId>pg-bulk-import-bom</artifactId>
+    <version>2.0.3-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>PostgreSQL Bulk Import - BOM</name>
+    <description>Bill of Materials (BOM) for PostgreSQL Bulk Import Library. Import this POM to manage versions of all pg-bulk-import modules.</description>
+    <url>https://github.com/egn88/java_bulk_import_lib</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>egn88</id>
+            <name>Eloy Ginestar</name>
+            <url>https://github.com/egn88</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/egn88/java_bulk_import_lib.git</connection>
+        <developerConnection>scm:git:git@github.com:egn88/java_bulk_import_lib.git</developerConnection>
+        <url>https://github.com/egn88/java_bulk_import_lib</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Core module - Java 8+ -->
+            <dependency>
+                <groupId>io.github.egn88</groupId>
+                <artifactId>pg-bulk-import-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- JPA module for javax.persistence (Java 8+) -->
+            <dependency>
+                <groupId>io.github.egn88</groupId>
+                <artifactId>pg-bulk-import-jpa-javax</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- JPA module for jakarta.persistence (Java 17+) -->
+            <dependency>
+                <groupId>io.github.egn88</groupId>
+                <artifactId>pg-bulk-import-jpa-jakarta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Spring Boot 3.x auto-configuration (Java 17+) -->
+            <dependency>
+                <groupId>io.github.egn88</groupId>
+                <artifactId>pg-bulk-import-spring-boot</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!-- Source plugin for Central publishing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Javadoc plugin for Central publishing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Release profile for publishing to Maven Central -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- GPG Signing -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Central Publishing Plugin -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.6.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
