@@ -11,7 +11,7 @@
 
     <name>PostgreSQL Bulk Import Library - Parent</name>
     <description>A Java library for efficient bulk INSERT/UPDATE operations on PostgreSQL using COPY command</description>
-    <url>https://github.com/elgina88/pg-bulk-import</url>
+    <url>https://github.com/egn88/java_bulk_import_lib</url>
 
     <modules>
         <module>pg-bulk-import-core</module>
@@ -30,22 +30,22 @@
 
     <developers>
         <developer>
-            <id>elgina88</id>
+            <id>egn88</id>
             <name>Eloy Ginestar</name>
-            <url>https://github.com/elgina88</url>
+            <url>https://github.com/egn88</url>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/elgina88/pg-bulk-import.git</connection>
-        <developerConnection>scm:git:git@github.com:elgina88/pg-bulk-import.git</developerConnection>
-        <url>https://github.com/elgina88/pg-bulk-import</url>
+        <connection>scm:git:git://github.com/egn88/java_bulk_import_lib.git</connection>
+        <developerConnection>scm:git:git@github.com:egn88/java_bulk_import_lib.git</developerConnection>
+        <url>https://github.com/egn88/java_bulk_import_lib</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/elgina88/pg-bulk-import/issues</url>
+        <url>https://github.com/egn88/java_bulk_import_lib/issues</url>
     </issueManagement>
 
     <properties>
