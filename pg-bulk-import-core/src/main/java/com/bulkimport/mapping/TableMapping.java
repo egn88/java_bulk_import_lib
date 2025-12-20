@@ -31,13 +31,16 @@ public class TableMapping<T> {
         this.entityClass = builder.entityClass;
         this.columns = Collections.unmodifiableMap(new LinkedHashMap<>(builder.columns));
 
-        this.idColumns = columns.values().stream()
-            .filter(ColumnMapping::isId)
-            .collect(Collectors.toUnmodifiableList());
+        // Use Java 8 compatible unmodifiable list creation
+        this.idColumns = Collections.unmodifiableList(
+            columns.values().stream()
+                .filter(ColumnMapping::isId)
+                .collect(Collectors.toList()));
 
-        this.nonIdColumns = columns.values().stream()
-            .filter(col -> !col.isId())
-            .collect(Collectors.toUnmodifiableList());
+        this.nonIdColumns = Collections.unmodifiableList(
+            columns.values().stream()
+                .filter(col -> !col.isId())
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -92,9 +95,10 @@ public class TableMapping<T> {
 
     /**
      * Gets all column mappings in order.
+     * Returns an unmodifiable list.
      */
     public List<ColumnMapping<T, ?>> getColumns() {
-        return new ArrayList<>(columns.values());
+        return Collections.unmodifiableList(new ArrayList<>(columns.values()));
     }
 
     /**
@@ -120,27 +124,32 @@ public class TableMapping<T> {
 
     /**
      * Gets the column names in order.
+     * Returns an unmodifiable list.
      */
     public List<String> getColumnNames() {
-        return new ArrayList<>(columns.keySet());
+        return Collections.unmodifiableList(new ArrayList<>(columns.keySet()));
     }
 
     /**
      * Gets the ID column names.
+     * Returns an unmodifiable list.
      */
     public List<String> getIdColumnNames() {
-        return idColumns.stream()
-            .map(ColumnMapping::getColumnName)
-            .collect(Collectors.toList());
+        return Collections.unmodifiableList(
+            idColumns.stream()
+                .map(ColumnMapping::getColumnName)
+                .collect(Collectors.toList()));
     }
 
     /**
      * Gets the non-ID column names.
+     * Returns an unmodifiable list.
      */
     public List<String> getNonIdColumnNames() {
-        return nonIdColumns.stream()
-            .map(ColumnMapping::getColumnName)
-            .collect(Collectors.toList());
+        return Collections.unmodifiableList(
+            nonIdColumns.stream()
+                .map(ColumnMapping::getColumnName)
+                .collect(Collectors.toList()));
     }
 
     /**

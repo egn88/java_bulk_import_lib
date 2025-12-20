@@ -3,6 +3,7 @@ package com.bulkimport.config;
 import com.bulkimport.exception.ConfigurationException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -130,7 +131,8 @@ public class BulkImportConfig {
          * These are typically the primary key or unique constraint columns.
          */
         public Builder conflictColumns(String... columns) {
-            this.conflictColumns = List.of(columns);
+            Objects.requireNonNull(columns, "columns cannot be null");
+            this.conflictColumns = new ArrayList<>(Arrays.asList(columns));
             return this;
         }
 
@@ -138,6 +140,7 @@ public class BulkImportConfig {
          * Sets the columns to use for conflict detection (ON CONFLICT clause).
          */
         public Builder conflictColumns(List<String> columns) {
+            Objects.requireNonNull(columns, "columns cannot be null");
             this.conflictColumns = new ArrayList<>(columns);
             return this;
         }
@@ -147,7 +150,8 @@ public class BulkImportConfig {
          * Only used with UPDATE_SPECIFIED strategy.
          */
         public Builder updateColumns(String... columns) {
-            this.updateColumns = List.of(columns);
+            Objects.requireNonNull(columns, "columns cannot be null");
+            this.updateColumns = new ArrayList<>(Arrays.asList(columns));
             return this;
         }
 
@@ -155,6 +159,7 @@ public class BulkImportConfig {
          * Sets the columns to update when a conflict occurs.
          */
         public Builder updateColumns(List<String> columns) {
+            Objects.requireNonNull(columns, "columns cannot be null");
             this.updateColumns = new ArrayList<>(columns);
             return this;
         }
@@ -164,7 +169,8 @@ public class BulkImportConfig {
          * If not specified, ID columns from the mapping will be used.
          */
         public Builder matchColumns(String... columns) {
-            this.matchColumns = List.of(columns);
+            Objects.requireNonNull(columns, "columns cannot be null");
+            this.matchColumns = new ArrayList<>(Arrays.asList(columns));
             return this;
         }
 
@@ -172,6 +178,7 @@ public class BulkImportConfig {
          * Sets the columns to use for matching rows during UPDATE operations.
          */
         public Builder matchColumns(List<String> columns) {
+            Objects.requireNonNull(columns, "columns cannot be null");
             this.matchColumns = new ArrayList<>(columns);
             return this;
         }

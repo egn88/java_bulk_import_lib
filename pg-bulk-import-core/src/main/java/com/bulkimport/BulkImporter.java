@@ -248,6 +248,7 @@ public class BulkImporter {
     private <T> int executeUpdate(Connection connection, TableMapping<T> mapping,
                                    List<T> list, Stream<T> stream) {
         StagingTableManager<T> stagingManager = new StagingTableManager<>(connection, mapping, config);
+        UpdateExecutor<T> updateExecutor = new UpdateExecutor<>(connection, mapping, config);
 
         try {
             // Create staging table
@@ -261,8 +262,10 @@ public class BulkImporter {
                 copyExecutor.copyInTo(stagingTable, stream);
             }
 
+            // Create index on match columns to speed up the UPDATE join
+            stagingManager.createIndexOnColumns(updateExecutor.getMatchColumns());
+
             // Execute UPDATE from staging to target
-            UpdateExecutor<T> updateExecutor = new UpdateExecutor<>(connection, mapping, config);
             return updateExecutor.executeUpdate(stagingTable);
 
         } finally {

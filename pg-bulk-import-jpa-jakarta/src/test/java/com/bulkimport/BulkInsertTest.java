@@ -4,61 +4,36 @@ import com.bulkimport.config.BulkImportConfig;
 import com.bulkimport.config.NullHandling;
 import com.bulkimport.mapping.TableMapping;
 import com.bulkimport.mapping.jpa.JpaEntityMapper;
+import com.bulkimport.testutil.DatabaseIntegrationTest;
 import com.bulkimport.testutil.PostgresTestContainer;
 import com.bulkimport.testutil.TestEntities.BulkUser;
 import com.bulkimport.testutil.TestEntities.JpaUser;
 import com.bulkimport.testutil.TestEntities.SimpleUser;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
-class BulkInsertTest {
+class BulkInsertTest extends DatabaseIntegrationTest {
 
-    @Container
-    private static final org.testcontainers.containers.PostgreSQLContainer<?> postgres =
-        PostgresTestContainer.getInstance();
-
-    private Connection connection;
-    private BulkImporter importer;
+    private static final String TABLE_NAME = "users";
 
     @BeforeAll
     static void setUpDatabase() throws SQLException {
-        // Ensure JPA mapper is registered
         JpaEntityMapper.register();
         PostgresTestContainer.createUsersTable();
     }
 
     @BeforeEach
     void setUp() throws SQLException {
-        connection = PostgresTestContainer.getConnection();
-        importer = BulkImporter.create(connection);
-
-        // Clear table before each test
-        try (Statement stmt = connection.createStatement()) {
-            stmt.execute("TRUNCATE TABLE users");
-        }
-    }
-
-    @AfterEach
-    void tearDown() throws SQLException {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
-        }
+        truncateTable(TABLE_NAME);
     }
 
     @Test
@@ -75,7 +50,7 @@ class BulkInsertTest {
 
         // Then
         assertThat(inserted).isEqualTo(3);
-        assertThat(countRows()).isEqualTo(3);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(3);
         assertThat(getUserName(1L)).isEqualTo("Alice");
     }
 
@@ -92,7 +67,7 @@ class BulkInsertTest {
 
         // Then
         assertThat(inserted).isEqualTo(2);
-        assertThat(countRows()).isEqualTo(2);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(2);
     }
 
     @Test
@@ -114,7 +89,7 @@ class BulkInsertTest {
 
         // Then
         assertThat(inserted).isEqualTo(2);
-        assertThat(countRows()).isEqualTo(2);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(2);
     }
 
     @Test
@@ -131,7 +106,7 @@ class BulkInsertTest {
 
         // Then
         assertThat(inserted).isEqualTo(batchSize);
-        assertThat(countRows()).isEqualTo(batchSize);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(batchSize);
     }
 
     @Test
@@ -145,7 +120,7 @@ class BulkInsertTest {
 
         // Then
         assertThat(inserted).isEqualTo(100);
-        assertThat(countRows()).isEqualTo(100);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(100);
     }
 
     @Test
@@ -218,31 +193,11 @@ class BulkInsertTest {
         assertThat(getUserEmail(1L)).isNull();
     }
 
-    private int countRows() throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users")) {
-            rs.next();
-            return rs.getInt(1);
-        }
-    }
-
     private String getUserName(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT name FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-            return null;
-        }
+        return getString(TABLE_NAME, "name", "id", id);
     }
 
     private String getUserEmail(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT email FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-            return null;
-        }
+        return getString(TABLE_NAME, "email", "id", id);
     }
 }

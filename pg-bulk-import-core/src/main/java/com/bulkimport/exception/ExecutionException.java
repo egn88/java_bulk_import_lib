@@ -18,7 +18,7 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException copyFailed(String tableName, Throwable cause) {
         return new ExecutionException(
-            String.format("COPY command failed for table '%s': %s", tableName, cause.getMessage()),
+            String.format("COPY command failed for table '%s': %s", tableName, getMessageOrDefault(cause)),
             cause
         );
     }
@@ -28,7 +28,7 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException stagingTableCreationFailed(String tableName, Throwable cause) {
         return new ExecutionException(
-            String.format("Failed to create staging table '%s': %s", tableName, cause.getMessage()),
+            String.format("Failed to create staging table '%s': %s", tableName, getMessageOrDefault(cause)),
             cause
         );
     }
@@ -38,7 +38,7 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException stagingTableCleanupFailed(String tableName, Throwable cause) {
         return new ExecutionException(
-            String.format("Failed to drop staging table '%s': %s", tableName, cause.getMessage()),
+            String.format("Failed to drop staging table '%s': %s", tableName, getMessageOrDefault(cause)),
             cause
         );
     }
@@ -48,7 +48,7 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException updateFailed(String tableName, Throwable cause) {
         return new ExecutionException(
-            String.format("UPDATE operation failed for table '%s': %s", tableName, cause.getMessage()),
+            String.format("UPDATE operation failed for table '%s': %s", tableName, getMessageOrDefault(cause)),
             cause
         );
     }
@@ -58,7 +58,7 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException upsertFailed(String tableName, Throwable cause) {
         return new ExecutionException(
-            String.format("UPSERT operation failed for table '%s': %s", tableName, cause.getMessage()),
+            String.format("UPSERT operation failed for table '%s': %s", tableName, getMessageOrDefault(cause)),
             cause
         );
     }
@@ -68,7 +68,7 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException connectionError(String operation, Throwable cause) {
         return new ExecutionException(
-            String.format("Database connection error during %s: %s", operation, cause.getMessage()),
+            String.format("Database connection error during %s: %s", operation, getMessageOrDefault(cause)),
             cause
         );
     }
@@ -78,9 +78,23 @@ public class ExecutionException extends BulkImportException {
      */
     public static ExecutionException csvGenerationFailed(Throwable cause) {
         return new ExecutionException(
-            String.format("Failed to generate CSV data: %s", cause.getMessage()),
+            String.format("Failed to generate CSV data: %s", getMessageOrDefault(cause)),
             cause
         );
+    }
+
+    /**
+     * Gets the message from a throwable, or a default message if null.
+     */
+    private static String getMessageOrDefault(Throwable cause) {
+        if (cause == null) {
+            return "(no cause)";
+        }
+        String message = cause.getMessage();
+        if (message == null || message.isEmpty()) {
+            return cause.getClass().getName();
+        }
+        return message;
     }
 
     /**

@@ -20,6 +20,8 @@
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <!-- Exclude stress tests by default; override with -Dsurefire.excludedGroups= -->
+        <surefire.excludedGroups>stress</surefire.excludedGroups>
     </properties>
 
     <dependencies>
@@ -110,6 +112,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Exclude stress tests by default -->
+                    <!-- Run stress tests with: mvn test -DincludeStress=true -->
+                    <!-- Run ONLY stress tests with: mvn test -Dgroups=stress -DincludeStress=true -->
+                    <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

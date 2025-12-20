@@ -20,9 +20,12 @@ import java.io.PipedOutputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 /**
@@ -42,6 +45,11 @@ public class CopyExecutor<T> {
 
     /**
      * Creates a new COPY executor.
+     *
+     * @param connection the database connection (must not be null)
+     * @param mapping the table mapping (must not be null)
+     * @param config the import configuration (must not be null)
+     * @throws NullPointerException if any parameter is null
      */
     public CopyExecutor(Connection connection, TableMapping<T> mapping, BulkImportConfig config) {
         this(connection, mapping, config, TypeConverterRegistry.getDefault());
@@ -49,13 +57,19 @@ public class CopyExecutor<T> {
 
     /**
      * Creates a new COPY executor with a custom converter registry.
+     *
+     * @param connection the database connection (must not be null)
+     * @param mapping the table mapping (must not be null)
+     * @param config the import configuration (must not be null)
+     * @param converterRegistry the type converter registry (must not be null)
+     * @throws NullPointerException if any parameter is null
      */
     public CopyExecutor(Connection connection, TableMapping<T> mapping,
                         BulkImportConfig config, TypeConverterRegistry converterRegistry) {
-        this.connection = connection;
-        this.mapping = mapping;
-        this.config = config;
-        this.converterRegistry = converterRegistry;
+        this.connection = Objects.requireNonNull(connection, "connection cannot be null");
+        this.mapping = Objects.requireNonNull(mapping, "mapping cannot be null");
+        this.config = Objects.requireNonNull(config, "config cannot be null");
+        this.converterRegistry = Objects.requireNonNull(converterRegistry, "converterRegistry cannot be null");
     }
 
     /**
@@ -130,10 +144,24 @@ public class CopyExecutor<T> {
                 // Wait for writer to complete and check for errors
                 try {
                     writerFuture.join();
-                } catch (Exception e) {
-                    throw new RuntimeException("CSV writing failed", e);
+                } catch (CompletionException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof ExecutionException) {
+                        throw (ExecutionException) cause;
+                    }
+                    throw ExecutionException.csvGenerationFailed(
+                            cause instanceof Exception ? (Exception) cause : e);
                 } finally {
                     executor.shutdown();
+                    try {
+                        if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                            executor.shutdownNow();
+                            log.warn("CSV writer thread did not terminate within timeout");
+                        }
+                    } catch (InterruptedException ie) {
+                        executor.shutdownNow();
+                        Thread.currentThread().interrupt();
+                    }
                 }
 
                 log.debug("COPY completed: {} rows", rowsCopied);

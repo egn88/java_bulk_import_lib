@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -30,11 +31,16 @@ public class UpdateExecutor<T> {
 
     /**
      * Creates a new update executor.
+     *
+     * @param connection the database connection (must not be null)
+     * @param mapping the table mapping (must not be null)
+     * @param config the import configuration (must not be null)
+     * @throws NullPointerException if any parameter is null
      */
     public UpdateExecutor(Connection connection, TableMapping<T> mapping, BulkImportConfig config) {
-        this.connection = connection;
-        this.mapping = mapping;
-        this.config = config;
+        this.connection = Objects.requireNonNull(connection, "connection cannot be null");
+        this.mapping = Objects.requireNonNull(mapping, "mapping cannot be null");
+        this.config = Objects.requireNonNull(config, "config cannot be null");
     }
 
     /**
@@ -143,7 +149,14 @@ public class UpdateExecutor<T> {
         return SqlIdentifier.quoteQualified(mapping.getSchemaName(), mapping.getTableName());
     }
 
-    private List<String> getMatchColumns() {
+    /**
+     * Gets the match columns for UPDATE operations.
+     * Uses explicitly configured match columns if available, otherwise defaults to ID columns.
+     *
+     * @return the list of match column names
+     * @throws IllegalStateException if no match columns can be determined
+     */
+    public List<String> getMatchColumns() {
         // Use explicitly configured match columns if available
         if (config.hasExplicitMatchColumns()) {
             return config.getMatchColumns();

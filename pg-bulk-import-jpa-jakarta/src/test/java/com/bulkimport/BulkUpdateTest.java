@@ -1,44 +1,33 @@
 package com.bulkimport;
 
 import com.bulkimport.config.BulkImportConfig;
+import com.bulkimport.mapping.jpa.JpaEntityMapper;
+import com.bulkimport.testutil.DatabaseIntegrationTest;
 import com.bulkimport.testutil.PostgresTestContainer;
 import com.bulkimport.testutil.TestEntities.JpaUser;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
-class BulkUpdateTest {
+class BulkUpdateTest extends DatabaseIntegrationTest {
 
-    @Container
-    private static final org.testcontainers.containers.PostgreSQLContainer<?> postgres =
-        PostgresTestContainer.getInstance();
-
-    private Connection connection;
-    private BulkImporter importer;
+    private static final String TABLE_NAME = "users";
 
     @BeforeAll
     static void setUpDatabase() throws SQLException {
+        JpaEntityMapper.register();
         PostgresTestContainer.createUsersTable();
     }
 
     @BeforeEach
     void setUp() throws SQLException {
-        connection = PostgresTestContainer.getConnection();
-        importer = BulkImporter.create(connection);
-
         // Clear and insert initial data
         try (Statement stmt = connection.createStatement()) {
             stmt.execute("TRUNCATE TABLE users");
@@ -48,13 +37,6 @@ class BulkUpdateTest {
                 (2, 'Bob', 'bob@example.com', 25, true),
                 (3, 'Charlie', 'charlie@example.com', 35, false)
                 """);
-        }
-    }
-
-    @AfterEach
-    void tearDown() throws SQLException {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
         }
     }
 
@@ -135,7 +117,7 @@ class BulkUpdateTest {
 
         // Then
         assertThat(updated).isEqualTo(0);
-        assertThat(countRows()).isEqualTo(3); // Original count unchanged
+        assertThat(countRows(TABLE_NAME)).isEqualTo(3); // Original count unchanged
     }
 
     @Test
@@ -150,41 +132,15 @@ class BulkUpdateTest {
         assertThat(updated).isEqualTo(0);
     }
 
-    private int countRows() throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users")) {
-            rs.next();
-            return rs.getInt(1);
-        }
-    }
-
     private String getUserName(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT name FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-            return null;
-        }
+        return getString(TABLE_NAME, "name", "id", id);
     }
 
     private String getUserEmail(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT email FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-            return null;
-        }
+        return getString(TABLE_NAME, "email", "id", id);
     }
 
     private Integer getUserAge(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT age FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-            return null;
-        }
+        return getInteger(TABLE_NAME, "age", "id", id);
     }
 }

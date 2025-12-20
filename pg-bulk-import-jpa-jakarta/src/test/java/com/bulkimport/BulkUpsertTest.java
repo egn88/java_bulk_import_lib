@@ -3,44 +3,32 @@ package com.bulkimport;
 import com.bulkimport.config.BulkImportConfig;
 import com.bulkimport.config.ConflictStrategy;
 import com.bulkimport.mapping.jpa.JpaEntityMapper;
+import com.bulkimport.testutil.DatabaseIntegrationTest;
 import com.bulkimport.testutil.PostgresTestContainer;
 import com.bulkimport.testutil.TestEntities.JpaUser;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
-class BulkUpsertTest {
+class BulkUpsertTest extends DatabaseIntegrationTest {
 
-    @Container
-    private static final org.testcontainers.containers.PostgreSQLContainer<?> postgres =
-        PostgresTestContainer.getInstance();
-
-    private Connection connection;
+    private static final String TABLE_NAME = "users";
 
     @BeforeAll
     static void setUpDatabase() throws SQLException {
-        // Ensure JPA mapper is registered
         JpaEntityMapper.register();
         PostgresTestContainer.createUsersTable();
     }
 
     @BeforeEach
     void setUp() throws SQLException {
-        connection = PostgresTestContainer.getConnection();
-
         // Clear and insert initial data
         try (Statement stmt = connection.createStatement()) {
             stmt.execute("TRUNCATE TABLE users");
@@ -52,13 +40,6 @@ class BulkUpsertTest {
         }
     }
 
-    @AfterEach
-    void tearDown() throws SQLException {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
-        }
-    }
-
     @Test
     void shouldUpsertWithDoNothing() throws SQLException {
         // Given
@@ -67,7 +48,7 @@ class BulkUpsertTest {
             .conflictColumns("id")
             .build();
 
-        BulkImporter importer = BulkImporter.create(connection)
+        BulkImporter upsertImporter = BulkImporter.create(connection)
             .withConfig(config);
 
         List<JpaUser> users = List.of(
@@ -76,11 +57,11 @@ class BulkUpsertTest {
         );
 
         // When
-        int affected = importer.upsert(JpaUser.class, users);
+        int affected = upsertImporter.upsert(JpaUser.class, users);
 
         // Then
         assertThat(affected).isEqualTo(1); // Only new row inserted
-        assertThat(countRows()).isEqualTo(3);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(3);
         assertThat(getUserName(1L)).isEqualTo("Alice"); // Not updated
         assertThat(getUserName(3L)).isEqualTo("Charlie"); // Inserted
     }
@@ -93,7 +74,7 @@ class BulkUpsertTest {
             .conflictColumns("id")
             .build();
 
-        BulkImporter importer = BulkImporter.create(connection)
+        BulkImporter upsertImporter = BulkImporter.create(connection)
             .withConfig(config);
 
         List<JpaUser> users = List.of(
@@ -102,11 +83,11 @@ class BulkUpsertTest {
         );
 
         // When
-        int affected = importer.upsert(JpaUser.class, users);
+        int affected = upsertImporter.upsert(JpaUser.class, users);
 
         // Then
         assertThat(affected).isEqualTo(2);
-        assertThat(countRows()).isEqualTo(3);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(3);
         assertThat(getUserName(1L)).isEqualTo("Alice Updated"); // Updated
         assertThat(getUserEmail(1L)).isEqualTo("alice.new@example.com"); // Updated
         assertThat(getUserName(3L)).isEqualTo("Charlie"); // Inserted
@@ -121,7 +102,7 @@ class BulkUpsertTest {
             .updateColumns("name")
             .build();
 
-        BulkImporter importer = BulkImporter.create(connection)
+        BulkImporter upsertImporter = BulkImporter.create(connection)
             .withConfig(config);
 
         List<JpaUser> users = List.of(
@@ -129,7 +110,7 @@ class BulkUpsertTest {
         );
 
         // When
-        int affected = importer.upsert(JpaUser.class, users);
+        int affected = upsertImporter.upsert(JpaUser.class, users);
 
         // Then
         assertThat(affected).isEqualTo(1);
@@ -146,7 +127,7 @@ class BulkUpsertTest {
             .conflictColumns("email")
             .build();
 
-        BulkImporter importer = BulkImporter.create(connection)
+        BulkImporter upsertImporter = BulkImporter.create(connection)
             .withConfig(config);
 
         List<JpaUser> users = List.of(
@@ -155,7 +136,7 @@ class BulkUpsertTest {
         );
 
         // When
-        int affected = importer.upsert(JpaUser.class, users);
+        int affected = upsertImporter.upsert(JpaUser.class, users);
 
         // Then
         assertThat(affected).isEqualTo(2);
@@ -171,7 +152,7 @@ class BulkUpsertTest {
             .conflictColumns("id")
             .build();
 
-        BulkImporter importer = BulkImporter.create(connection)
+        BulkImporter upsertImporter = BulkImporter.create(connection)
             .withConfig(config);
 
         List<JpaUser> users = List.of(
@@ -180,11 +161,11 @@ class BulkUpsertTest {
         );
 
         // When
-        int affected = importer.upsert(JpaUser.class, users);
+        int affected = upsertImporter.upsert(JpaUser.class, users);
 
         // Then
         assertThat(affected).isEqualTo(2);
-        assertThat(countRows()).isEqualTo(4);
+        assertThat(countRows(TABLE_NAME)).isEqualTo(4);
     }
 
     @Test
@@ -195,53 +176,27 @@ class BulkUpsertTest {
             .conflictColumns("id")
             .build();
 
-        BulkImporter importer = BulkImporter.create(connection)
+        BulkImporter upsertImporter = BulkImporter.create(connection)
             .withConfig(config);
 
         List<JpaUser> users = List.of();
 
         // When
-        int affected = importer.upsert(JpaUser.class, users);
+        int affected = upsertImporter.upsert(JpaUser.class, users);
 
         // Then
         assertThat(affected).isEqualTo(0);
     }
 
-    private int countRows() throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users")) {
-            rs.next();
-            return rs.getInt(1);
-        }
-    }
-
     private String getUserName(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT name FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-            return null;
-        }
+        return getString(TABLE_NAME, "name", "id", id);
     }
 
     private String getUserEmail(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT email FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-            return null;
-        }
+        return getString(TABLE_NAME, "email", "id", id);
     }
 
     private Integer getUserAge(Long id) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT age FROM users WHERE id = " + id)) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-            return null;
-        }
+        return getInteger(TABLE_NAME, "age", "id", id);
     }
 }

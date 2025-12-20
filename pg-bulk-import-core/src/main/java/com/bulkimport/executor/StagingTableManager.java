@@ -13,7 +13,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Manages temporary staging tables for bulk UPDATE and UPSERT operations.
@@ -31,11 +34,16 @@ public class StagingTableManager<T> {
 
     /**
      * Creates a new staging table manager.
+     *
+     * @param connection the database connection (must not be null)
+     * @param mapping the table mapping (must not be null)
+     * @param config the import configuration (must not be null)
+     * @throws NullPointerException if any parameter is null
      */
     public StagingTableManager(Connection connection, TableMapping<T> mapping, BulkImportConfig config) {
-        this.connection = connection;
-        this.mapping = mapping;
-        this.config = config;
+        this.connection = Objects.requireNonNull(connection, "connection cannot be null");
+        this.mapping = Objects.requireNonNull(mapping, "mapping cannot be null");
+        this.config = Objects.requireNonNull(config, "config cannot be null");
     }
 
     /**
@@ -83,6 +91,38 @@ public class StagingTableManager<T> {
                     stmt.execute(alterSql);
                 }
             }
+        }
+    }
+
+    /**
+     * Creates an index on the staging table for the specified columns.
+     * This improves JOIN performance when updating from the staging table.
+     *
+     * @param columns the columns to index
+     */
+    public void createIndexOnColumns(List<String> columns) {
+        if (stagingTableName == null) {
+            throw new IllegalStateException("Staging table has not been created yet");
+        }
+        if (columns == null || columns.isEmpty()) {
+            return;
+        }
+
+        String indexName = "idx_" + stagingTableName + "_match";
+        String columnList = columns.stream()
+            .map(SqlIdentifier::quote)
+            .collect(Collectors.joining(", "));
+
+        String createIndexSql = "CREATE INDEX " + SqlIdentifier.quote(indexName) +
+            " ON " + SqlIdentifier.quote(stagingTableName) + " (" + columnList + ")";
+
+        log.debug("Creating staging table index: {}", createIndexSql);
+
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(createIndexSql);
+            log.debug("Created index on staging table columns: {}", columns);
+        } catch (SQLException e) {
+            throw ExecutionException.stagingTableCreationFailed(stagingTableName + " (index)", e);
         }
     }
 
