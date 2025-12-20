@@ -250,8 +250,8 @@
                         <releaseProfiles>release</releaseProfiles>
                         <!-- Tag format: v1.0.0 -->
                         <tagNameFormat>v@{project.version}</tagNameFormat>
-                        <!-- Don't push changes automatically (safer) -->
-                        <pushChanges>false</pushChanges>
+                        <!-- Push changes and tags automatically -->
+                        <pushChanges>true</pushChanges>
                         <!-- Generate release POMs -->
                         <generateReleasePoms>false</generateReleasePoms>
                         <!-- Skip tests during release:perform (already ran in prepare) -->

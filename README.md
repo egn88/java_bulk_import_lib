@@ -107,7 +107,7 @@ Use the core module with custom `@BulkTable` annotations or fluent builder API:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-core</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.3</version>
 </dependency>
 ```
 
@@ -139,7 +139,7 @@ Use the javax.persistence module to work with existing JPA entities:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-jpa-javax</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.3</version>
 </dependency>
 ```
 
@@ -170,7 +170,7 @@ Use the jakarta.persistence module for modern JPA:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-jpa-jakarta</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.3</version>
 </dependency>
 ```
 
@@ -201,7 +201,7 @@ Use the Spring Boot starter for auto-configuration:
 <dependency>
     <groupId>io.github.egn88</groupId>
     <artifactId>pg-bulk-import-spring-boot</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.3</version>
 </dependency>
 ```
 
@@ -224,16 +224,16 @@ public class UserService {
 
 ```groovy
 // Java 8 (core only)
-implementation 'io.github.egn88:pg-bulk-import-core:2.0.1'
+implementation 'io.github.egn88:pg-bulk-import-core:2.0.3'
 
 // Java 8 with JPA (javax)
-implementation 'io.github.egn88:pg-bulk-import-jpa-javax:2.0.1'
+implementation 'io.github.egn88:pg-bulk-import-jpa-javax:2.0.3'
 
 // Java 17+ with JPA (jakarta)
-implementation 'io.github.egn88:pg-bulk-import-jpa-jakarta:2.0.1'
+implementation 'io.github.egn88:pg-bulk-import-jpa-jakarta:2.0.3'
 
 // Spring Boot 3.x
-implementation 'io.github.egn88:pg-bulk-import-spring-boot:2.0.1'
+implementation 'io.github.egn88:pg-bulk-import-spring-boot:2.0.3'
 ```
 
 ## Building the Library
@@ -745,7 +745,7 @@ public abstract class BaseIntegrationTest {
 ### Getting Help
 
 If you encounter issues not covered here:
-1. Check the [GitHub Issues](https://github.com/elgina88/pg-bulk-import/issues) for similar problems
+1. Check the [GitHub Issues](https://github.com/egn88/java_bulk_import_lib/issues) for similar problems
 2. Open a new issue with:
    - Java version and module used
    - PostgreSQL version
