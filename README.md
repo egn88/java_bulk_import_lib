@@ -182,11 +182,19 @@ importer.upsert(User.class, users);
 
 ```java
 BulkImportConfig config = BulkImportConfig.builder()
-    .conflictStrategy(ConflictStrategy.UPDATE_ALL)
-    .conflictColumns("email")              // ON CONFLICT columns
-    .updateColumns("name", "updated_at")   // columns to update (for UPDATE_SPECIFIED)
-    .matchColumns("external_id")           // match columns for UPDATE (default: @Id)
-    .schemaName("public")
+    // --- UPSERT options ---
+    .conflictStrategy(ConflictStrategy.UPDATE_ALL) // optional, default: FAIL
+    .conflictColumns("email")                      // optional, default: @Id columns (must have unique constraint)
+    .updateColumns("name", "updated_at")           // optional, only for UPDATE_SPECIFIED strategy
+
+    // --- UPDATE options ---
+    .matchColumns("external_id")                   // optional, default: @Id columns (no unique constraint required)
+
+    // --- General options ---
+    .schemaName("public")                          // optional, default: from @Table annotation or DB default
+    .stagingTablePrefix("tmp_")                    // optional, default: "bulk_staging_"
+    .autoCleanupStaging(true)                      // optional, default: true
+    .nullHandling(NullHandling.EMPTY_STRING)       // optional, default: EMPTY_STRING
     .build();
 ```
 
